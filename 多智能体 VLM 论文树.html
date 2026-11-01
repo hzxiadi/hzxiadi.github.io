@@ -1,0 +1,580 @@
+<!doctype html><html><head><meta charset=utf8><meta name=viewport content="width=device-width,initial-scale=1,viewport-fit=cover"><style>:root{color-scheme:light;box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}html{scroll-padding-top:env(safe-area-inset-top,0px)}body{margin:0;padding:0;font:14px -apple-system,BlinkMacSystemFont,sans-serif;background:#fff;color:#000}img{max-width:100%}[hidden]:not([hidden=until-found i]){display:none!important}</style></head><body>
+<title>多智能体 VLM 论文树</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500&family=Noto+Sans+SC:wght@400;500;700&family=Noto+Serif+SC:wght@600&display=swap">
+<style>
+/* Layout: 顶部工具条 + 左侧可缩放的横向论文树(悬停出卡片) + 右侧固定详情栏; 窄屏时详情栏落到树下方 */
+:root{
+  --bg:#f3f6f7; --surface:#ffffff; --surface2:#e9eff1; --fg:#14262b; --muted:#5b6f75; --line:#cfdadd;
+  --accent:#0b6e75; --t1:#0b6e75; --t2:#2f9aa0; --t3:#86c8cb; --t4:#8ea3a8; --edge:#c2562f; --ok:#2e7d4f; --warn:#a8741a;
+  --serif:"Noto Serif SC","Songti SC","STSong",serif; --sans:"Noto Sans SC","PingFang SC","Microsoft YaHei",system-ui,sans-serif; --mono:"IBM Plex Mono",ui-monospace,Menlo,monospace;
+  --shadow:0 10px 30px rgba(10,40,48,.18);
+}
+@media (prefers-color-scheme: dark){:root:not([data-theme="light"]){
+  --bg:#0e1a1d; --surface:#15262a; --surface2:#1c3338; --fg:#e3eef0; --muted:#93aaaf; --line:#2c4449;
+  --accent:#58c4cb; --t1:#58c4cb; --t2:#3a9ea5; --t3:#27747a; --t4:#6f878c; --edge:#e58a63; --ok:#6cc08e; --warn:#e0b25c;
+  --shadow:0 10px 30px rgba(0,0,0,.55); color-scheme:dark;}}
+:root[data-theme="dark"]{
+  --bg:#0e1a1d; --surface:#15262a; --surface2:#1c3338; --fg:#e3eef0; --muted:#93aaaf; --line:#2c4449;
+  --accent:#58c4cb; --t1:#58c4cb; --t2:#3a9ea5; --t3:#27747a; --t4:#6f878c; --edge:#e58a63; --ok:#6cc08e; --warn:#e0b25c;
+  --shadow:0 10px 30px rgba(0,0,0,.55); color-scheme:dark;}
+*{box-sizing:border-box}
+body{background:var(--bg);color:var(--fg);font-family:var(--sans);font-size:14px;line-height:1.6;
+  padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px));padding-block:20px 32px}
+.wrap{max-width:1500px;margin:0 auto;display:flex;flex-direction:column;gap:14px}
+header{display:flex;flex-wrap:wrap;gap:12px 24px;align-items:flex-end;justify-content:space-between}
+h1{font-family:var(--serif);font-size:26px;line-height:1.25;margin:0;text-wrap:balance}
+.sub{color:var(--muted);margin:4px 0 0;max-width:62ch}
+.prog{min-width:200px}
+.prog .bar{height:6px;background:var(--surface2);border-radius:3px;overflow:hidden;margin-top:6px}
+.prog .bar i{display:block;height:100%;background:var(--accent);width:0;transition:width .3s}
+.prog .num{font-family:var(--mono);font-size:12px;color:var(--muted)}
+.toolbar{display:flex;flex-wrap:wrap;gap:10px;align-items:center}
+.tabs{display:flex;border:1px solid var(--line);border-radius:8px;overflow:hidden}
+.tabs button{border:0;background:var(--surface);color:var(--muted);padding:7px 16px;font:inherit;cursor:pointer}
+.tabs button[aria-selected="true"]{background:var(--accent);color:var(--bg);font-weight:700}
+.tabs button:focus-visible,button:focus-visible,input:focus-visible,a:focus-visible,summary:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+input[type=search]{flex:1 1 180px;min-width:0;max-width:300px;padding:7px 10px;border:1px solid var(--line);border-radius:8px;background:var(--surface);color:var(--fg);font:inherit}
+.chips{display:flex;flex-wrap:wrap;gap:6px}
+.chip{display:inline-flex;align-items:center;gap:6px;padding:3px 10px;border-radius:999px;border:1px solid var(--line);background:var(--surface);color:var(--fg);font:inherit;font-size:12.5px;cursor:pointer}
+.chip[aria-pressed="false"]{opacity:.45}
+.dot{width:10px;height:10px;border-radius:50%;display:inline-block;border:2px solid transparent}
+.dot.t1{background:var(--t1)}.dot.t2{background:var(--t2)}.dot.t3{background:var(--t3)}.dot.t4{border-color:var(--t4);background:transparent}
+.tool{border:1px solid var(--line);background:var(--surface);color:var(--fg);border-radius:8px;padding:6px 11px;font:inherit;font-size:13px;cursor:pointer}
+.tool[aria-pressed="true"]{border-color:var(--edge);color:var(--edge)}
+.legend{color:var(--muted);font-size:12.5px;display:flex;flex-wrap:wrap;gap:4px 16px}
+.main{display:grid;grid-template-columns:minmax(0,1fr) 390px;gap:14px;align-items:start}
+@media (max-width:980px){.main{grid-template-columns:minmax(0,1fr)}}
+.canvas{background:var(--surface);border:1px solid var(--line);border-radius:12px;overflow:auto;height:min(78vh,860px);position:relative}
+svg{display:block}
+.link{fill:none;stroke:var(--line);stroke-width:1.4}
+.xedge{fill:none;stroke:var(--edge);stroke-width:1.5;stroke-dasharray:5 4;opacity:.8}
+.node{cursor:pointer}
+.node text{fill:var(--fg);font-size:12.5px;paint-order:stroke;stroke:var(--surface);stroke-width:4px;stroke-linejoin:round}
+.node .ordt{font-family:var(--mono);font-size:10.5px;fill:var(--muted)}
+.node.grp text{font-weight:700;font-size:13px}
+.node.dim{opacity:.18}
+.node.read text.ttl{fill:var(--muted)}
+.node.sel circle.main{stroke:var(--edge);stroke-width:3}
+.panel{background:var(--surface);border:1px solid var(--line);border-radius:12px;padding:16px;display:flex;flex-direction:column;gap:12px;position:sticky;top:12px;max-height:calc(100vh - 24px);overflow:auto}
+@media (max-width:980px){.panel{position:static;max-height:none}}
+.empty{color:var(--muted)}
+.card h3{font-size:16px;line-height:1.4;margin:6px 0 2px;text-wrap:balance}
+.card .meta{color:var(--muted);font-size:12.5px}
+.card dl{margin:10px 0 0;display:flex;flex-direction:column;gap:9px}
+.card dt{font-size:11.5px;letter-spacing:.06em;color:var(--accent);font-weight:700}
+.card dd{margin:1px 0 0}
+.tag{display:inline-block;padding:1px 9px;border-radius:999px;font-size:12px;font-weight:700;color:#fff}
+.tag.t1{background:var(--t1);color:var(--bg)}.tag.t2{background:var(--t2);color:var(--bg)}.tag.t3{background:var(--t3);color:var(--fg)}.tag.t4{border:1px solid var(--t4);color:var(--muted)}
+.ord{font-family:var(--mono);font-size:12px;color:var(--muted);margin-left:6px}
+.ver{margin-top:10px;font-size:12px;color:var(--muted);border-top:1px dashed var(--line);padding-top:8px}
+.ver b{color:var(--warn)}
+.actions{display:flex;flex-wrap:wrap;gap:8px}
+.btn{padding:6px 12px;border-radius:8px;border:1px solid var(--accent);background:var(--accent);color:var(--bg);font:inherit;font-size:13px;text-decoration:none;cursor:pointer}
+.btn.ghost{background:transparent;color:var(--accent)}
+.rel{display:flex;flex-wrap:wrap;gap:6px}
+.rel button{border:1px solid var(--line);background:var(--surface2);color:var(--fg);border-radius:6px;padding:2px 8px;font:inherit;font-size:12px;cursor:pointer}
+#tt{position:fixed;z-index:50;width:min(400px,calc(100vw - 24px));background:var(--surface);color:var(--fg);border:1px solid var(--line);border-radius:12px;box-shadow:var(--shadow);padding:14px 16px;pointer-events:none;font-size:13px;line-height:1.55}
+#tt h3{font-size:14.5px}
+#tt dd{font-size:12.8px}
+.route{display:flex;flex-direction:column;gap:18px}
+.stage h2{font-size:13px;letter-spacing:.06em;color:var(--muted);margin:0 0 6px;font-weight:700}
+.row{display:grid;grid-template-columns:34px minmax(0,1fr) auto;gap:4px 12px;align-items:start;padding:9px 12px;border:1px solid var(--line);background:var(--surface);border-radius:10px;margin-bottom:6px;cursor:pointer;width:100%;text-align:left;font:inherit;color:inherit}
+.row.sel{border-color:var(--edge)}
+.row .n{font-family:var(--mono);color:var(--muted);padding-top:2px}
+.row .t{font-weight:500}
+.row .w{color:var(--muted);font-size:12.5px;grid-column:2/3}
+.row.read .t{text-decoration:line-through;text-decoration-color:var(--muted);color:var(--muted)}
+.row .r{display:flex;gap:8px;align-items:center}
+.foot{color:var(--muted);font-size:12.5px;max-width:90ch}
+details summary{cursor:pointer}
+[hidden]{display:none!important}
+@media (prefers-reduced-motion:reduce){*{transition:none!important}}
+</style>
+
+<div class="wrap">
+  <header>
+    <div>
+      <h1>多智能体 VLM 论文树</h1>
+      <p class="sub">从全景综述到前沿方法的阅读地图。节点越大越实心,越建议精读。悬停节点看问题、方法、结果、来源与后续,点击节点固定到右侧并可标记已读。</p>
+    </div>
+    <div class="prog" aria-live="polite"><div class="num" id="progNum">已读 0 / 0</div><div class="bar"><i id="progBar"></i></div></div>
+  </header>
+
+  <div class="toolbar">
+    <div class="tabs" role="tablist">
+      <button role="tab" id="tabTree" aria-selected="true">论文树</button>
+      <button role="tab" id="tabRoute" aria-selected="false">阅读路线</button>
+    </div>
+    <input id="q" type="search" placeholder="搜索标题、作者、关键词" aria-label="搜索论文">
+    <div class="chips" id="tierChips"></div>
+    <button class="tool" id="bUnread" aria-pressed="false">只看未读</button>
+  </div>
+
+  <div class="toolbar" id="treeTools">
+    <button class="tool" id="bEdges" aria-pressed="false">显示引用关系线</button>
+    <button class="tool" id="bExpand">全部展开</button>
+    <button class="tool" id="bCollapse">折叠到一级</button>
+    <button class="tool" id="bZoomOut" aria-label="缩小">缩小</button>
+    <button class="tool" id="bZoomIn" aria-label="放大">放大</button>
+    <span class="legend" id="legend"></span>
+  </div>
+
+  <div class="main">
+    <section id="treeView" class="canvas" aria-label="论文树"><svg id="svg" role="img" aria-label="多智能体 VLM 论文树"></svg></section>
+    <section id="routeView" class="route" hidden></section>
+    <aside class="panel" id="panel" aria-live="polite"><div class="empty">点击任一论文节点,这里会固定显示完整信息、论文链接和引用关系。</div></aside>
+  </div>
+
+  <p class="foot">整理于 2026-11-01。核实标记:<b>A</b> 已打开原文或官方摘要页核对;<b>B</b> 只核实到标题、出处或二手摘要,细节请打开原文确认;<b>C</b> 经典论文,按已有知识概述,没有重新打开原文,因此不写具体数字。引用关系线只画从参考文献列表里核实过的引用,不代表完整引用图。</p>
+</div>
+
+<div id="tt" hidden></div>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/d3/7.8.5/d3.min.js"></script>
+<script>
+const TIERS={
+  1:{name:'精读',desc:'逐节读,看公式、消融和训练细节,想清楚怎么复现或改进',time:'约 2–3 小时'},
+  2:{name:'细读',desc:'读懂方法和主实验,记下结论与局限',time:'约 1 小时'},
+  3:{name:'略读',desc:'看摘要、方法图、主表和结论',time:'约 20–30 分钟'},
+  4:{name:'泛读',desc:'知道它做什么、在领域里的位置即可',time:'约 10 分钟'}
+};
+const VER={A:'A 已核对原文或官方摘要',B:'B 仅核实标题与出处,细节待核对',C:'C 经典论文,按已有知识概述'};
+const ax=id=>'https://arxiv.org/abs/'+id;
+const sr=t=>'https://arxiv.org/search/?searchtype=title&query='+encodeURIComponent(t);
+
+const P={};
+function add(o){P[o.id]=o}
+
+add({id:'s_llmma',s:'LLM 多智能体综述',t:'Large Language Model based Multi-Agents: A Survey of Progress and Challenges',au:'Guo, Chen, Wang, ..., Zhang',yr:2024,ven:'arXiv 2024-02',url:ax('2402.01680'),tier:4,ord:1,ver:'A',kw:'survey llm multi-agent',
+ why:'先用它建立多智能体的术语表:角色分工、通信结构、应用场景。看目录和第 2 节即可。',
+ p:'LLM 多智能体系统发展很快,缺少一份系统梳理:智能体如何分工、如何通信、有哪些应用与挑战。',
+ m:'综述。对比单智能体与多智能体,讨论智能体画像、通信方式、能力获取,并梳理应用与挑战。作者还维护了一个开源论文清单仓库。',
+ r:'无实验结果。价值在于给出整个领域的分类框架。',
+ src:'arXiv 2402.01680,Nitesh Chawla、Xiangliang Zhang 等(Notre Dame 方向)。',
+ nx:'纯文本 LLM 视角,没有视觉。视觉部分接着读下面的多模态智能体综述。'});
+add({id:'s_lma',s:'大型多模态智能体综述',t:'Large multimodal agents: a survey',au:'综述作者见原文',yr:2025,ven:'Springer 期刊,2025-11 在线',url:'https://link.springer.com/article/10.1007/s44267-025-00093-y',tier:4,ord:2,ver:'A',kw:'survey multimodal agents',
+ why:'直接覆盖多模态智能体,且有专门的「多智能体协作」一节,是最贴题的综述。读第 4 节。',
+ p:'以 LLM 为核心的多模态智能体(LMA)缺少系统综述。',
+ m:'系统回顾 LLM 驱动的多模态智能体,其中第 4 节专门讲多智能体协作,例如医疗诊断分角色(全科医生、放射科医生)的 MAM、移动端自动化的 MemoDroid、艺术字体生成 MetaDesigner、有声绘本 MM-StoryAgent。',
+ r:'无实验结果。适合当作「应用场景目录」。',
+ src:'Springer,DOI 10.1007/s44267-025-00093-y;页面标注发表 2025-11-26,2026-01 修订。',
+ nx:'它列的应用多是流程拼装型框架,没有讨论智能体之间「传什么」的问题。这正是 ViF 与 L²-VMAS 切入的地方。'});
+add({id:'s_embodied',s:'多智能体具身 AI 综述',t:'Multi-agent embodied AI: advances and future directions',au:'Feng, Xue, Yuan, ..., Wang',yr:2026,ven:'Science China Information Sciences 69(5):151202',url:sr('Multi-agent embodied AI: advances and future directions'),tier:4,ord:18,ver:'B',kw:'survey embodied multi-agent',
+ why:'只有走具身方向时再读。',
+ p:'(据标题)总结多智能体具身智能的进展与方向。',
+ m:'综述。本次只从 MECoBench 的参考文献核实到题目与出处,正文未读。',
+ r:'未核实。',
+ src:'Sci. China Inf. Sci. 2026 年第 69 卷第 5 期,文章号 151202。',
+ nx:'被 MECoBench 引用,用来说明文本基准无法覆盖视觉具身协作的失败模式。'});
+add({id:'s_vlm',s:'VLM 方法综述',t:'Exploring the Frontier of Vision-Language Models: A Survey of Current Methodologies and Future Directions',au:'Ghosh, Acharya, Saha, Jain, Chadha',yr:2024,ven:'arXiv 2024-04',url:ax('2404.07214'),tier:4,ord:19,ver:'A',kw:'survey vlm',
+ why:'如果对单体 VLM 还不熟,翻一遍分类即可。',
+ p:'VLM 模型很多,缺少按输入输出能力分类的系统梳理。',
+ m:'把 VLM 分为三类:视觉语言理解、多模态输入文本生成、多模态输入多模态输出,逐个分析架构、训练数据、优缺点。',
+ r:'无实验结果。',
+ src:'arXiv 2404.07214。',
+ nx:'2024 年的综述,不含 Qwen3-VL 这一代模型。'});
+
+add({id:'b_clip',s:'CLIP',t:'Learning Transferable Visual Models From Natural Language Supervision',au:'Radford et al.',yr:2021,ven:'ICML 2021',url:ax('2103.00020'),tier:4,ord:22,ver:'C',kw:'vlm contrastive',
+ why:'VLM 的视觉编码基础。知道图文对比学习即可。',
+ p:'视觉模型依赖固定类别标注,难以零样本迁移。',
+ m:'用大规模图文对做对比学习,把图像和文本映射到同一空间。',
+ r:'(未重新核对数字)零样本分类能力强,成为后续多数 VLM 视觉编码器的思路来源。',
+ src:'OpenAI,ICML 2021,arXiv 2103.00020。',nx:'LLaVA 等把这类视觉编码器接到 LLM 上。'});
+add({id:'b_llava',s:'LLaVA',t:'Visual Instruction Tuning (LLaVA)',au:'Liu et al.',yr:2023,ven:'NeurIPS 2023',url:ax('2304.08485'),tier:4,ord:21,ver:'C',kw:'vlm instruction tuning',
+ why:'理解「视觉编码器 + 投影层 + LLM」这个标准 VLM 结构,L²-VMAS 就是在投影层之后取视觉隐状态。',
+ p:'如何让 LLM 看懂图并按指令回答。',
+ m:'视觉编码器接投影层再接 LLM,用 GPT 生成的图文指令数据做微调。',
+ r:'(未重新核对数字)开源 VLM 的起点之一。',
+ src:'arXiv 2304.08485,NeurIPS 2023。',nx:'L²-VMAS 用到了 LLaVA-OneVision-1.5 作为骨干之一。'});
+add({id:'b_qwen3vl',s:'Qwen3-VL 技术报告',t:'Qwen3-VL Technical Report',au:'Bai et al. (Qwen Team)',yr:2025,ven:'arXiv 2025-11',url:ax('2511.21631'),tier:4,ord:20,ver:'B',kw:'vlm backbone qwen',
+ why:'近期工作最常用的开源 VLM 骨干。看模型规格(2B 到 32B、Instruct 与 Thinking 两种)就够了。',
+ p:'开源通用多模态模型的新一代版本。',
+ m:'本次只从引用处核实到题目与编号,正文未读。',
+ r:'未核实。',
+ src:'arXiv 2511.21631。',nx:'L²-VMAS 在 2B/4B/8B/32B 全系列上做实验,MECoBench 也评测了 Qwen3-VL。'});
+
+add({id:'b_camel',s:'CAMEL',t:'CAMEL: Communicative Agents for "Mind" Exploration of LLM Society',au:'Li et al.',yr:2023,ven:'NeurIPS 2023',url:ax('2303.17760'),tier:4,ord:27,ver:'C',kw:'llm multi-agent role play',
+ why:'LLM 多智能体的早期代表,看「角色扮演式对话」这个想法。',
+ p:'如何让多个 LLM 在少人工干预下自主协作。',m:'给智能体分配角色并用启发式提示引导它们对话完成任务。',r:'(未核对数字)提出了角色扮演式协作的基本范式。',
+ src:'arXiv 2303.17760。',nx:'AutoGen、MetaGPT 在此之后把对话与流程做得更工程化。'});
+add({id:'b_autogen',s:'AutoGen',t:'AutoGen: Enabling Next-Gen LLM Applications via Multi-Agent Conversation',au:'Wu et al.',yr:2023,ven:'arXiv 2308.08155(后发表于 COLM 2024)',url:ax('2308.08155'),tier:4,ord:26,ver:'C',kw:'llm multi-agent framework',
+ why:'实践中最常见的多智能体编程框架之一,知道它能做什么即可。',
+ p:'开发多智能体应用缺少统一的对话式编程抽象。',m:'提供可定制、可对话的智能体与对话编程接口。',r:'(未核对数字)被广泛用作多智能体系统的基线框架。',
+ src:'Microsoft 等,arXiv 2308.08155。',nx:'—'});
+add({id:'b_metagpt',s:'MetaGPT',t:'MetaGPT: Meta Programming for a Multi-Agent Collaborative Framework',au:'Hong et al.',yr:2024,ven:'ICLR 2024',url:ax('2308.00352'),tier:4,ord:25,ver:'B',kw:'llm multi-agent sop',
+ why:'看「用流程化的中间产物协调智能体」的思路。',
+ p:'多智能体协作容易在多轮对话里走偏。',m:'把人类团队的标准作业流程编码进提示,让智能体产出结构化中间文档。',r:'(未核对数字)在软件开发任务上被引用为代表性框架。',
+ src:'ICLR 2024(会议信息来自 MECoBench 的参考文献)。',nx:'MECoBench 将其归入「纯语言多智能体」基线。'});
+add({id:'b_agentverse',s:'AgentVerse',t:'AgentVerse: Facilitating Multi-Agent Collaboration and Exploring Emergent Behaviors',au:'Chen et al.',yr:2024,ven:'ICLR 2024',url:ax('2308.10848'),tier:4,ord:28,ver:'B',kw:'llm multi-agent emergent',
+ why:'了解「群体涌现行为」,选读。',
+ p:'(据标题)如何组织多智能体协作并观察涌现行为。',m:'未打开正文。',r:'未核实。',
+ src:'ICLR 2024(来自 MECoBench 的参考文献)。',nx:'MECoBench 在讨论规模化与涌现协作行为时引用。'});
+add({id:'b_mad',s:'多智能体辩论',t:'Improving Factuality and Reasoning in Language Models through Multiagent Debate',au:'Du, Li, Torralba, Tenenbaum, Mordatch',yr:2023,ven:'ICML',url:ax('2305.14325'),tier:4,ord:23,ver:'B',kw:'debate llm factuality',
+ why:'「多个模型互相辩论再收敛」是后面很多视觉多智能体的基础范式。',
+ p:'单个 LLM 容易事实性错误或推理不一致。',m:'多个模型实例各自作答,再读取彼此答案,多轮辩论后收敛。',r:'(未核对数字)在推理与事实性任务上带来提升。',
+ src:'arXiv 2305.14325;ICML(来自 L²-VMAS 参考文献)。',nx:'L²-VMAS 提到它,说明文本多智能体里「多轮协作有收益」是已有共识,视觉场景却并非如此。'});
+add({id:'b_macnet',s:'MacNet 规模化协作',t:'Scaling Large Language Model-based Multi-Agent Collaboration',au:'Qian et al.',yr:2025,ven:'ICLR 2025',url:sr('Scaling Large Language Model-based Multi-Agent Collaboration'),tier:4,ord:24,ver:'B',kw:'scaling llm multi-agent',
+ why:'L²-VMAS 把它当作「文本里智能体越多越好」的参照。',
+ p:'(据标题)LLM 多智能体协作能否随智能体数量规模化。',m:'未打开正文。',r:'未核实。',
+ src:'ICLR 2025(来自 L²-VMAS、MECoBench 的参考文献)。',nx:'L²-VMAS 与 MECoBench 都引用了它。'});
+
+add({id:'c_mast',s:'多智能体为何失败(MAST)',t:'Why Do Multi-Agent LLM Systems Fail?',au:'Cemri, Pan, Yang, ..., Stoica',yr:2025,ven:'arXiv 2025-03(v3 2025-10)',url:ax('2503.13657'),tier:2,ord:3,ver:'A',kw:'failure taxonomy llm multi-agent',
+ why:'建立「多智能体系统为什么没带来收益」的失败框架。后面几篇视觉论文的动机都能在这里找到对应项。',
+ p:'多智能体系统在常见基准上的提升往往很小,但没有系统的失败原因分析。',
+ m:'构建 MAST-Data(7 个主流框架上 1600+ 条标注轨迹)和首个失败分类 MAST:由 150 条轨迹人工标注得到(一致性 kappa 0.88),共 14 种失败模式,归为三类:系统设计问题、智能体间错位、任务验证问题。另有 LLM-as-a-Judge 标注流水线。',
+ r:'在 GPT-4、Claude 3、Qwen2.5、CodeLlama 与编程、数学、通用智能体任务上分析失败分布,指出需要更复杂的方案而非简单修补。数据、分类和标注器已公开。',
+ src:'arXiv 2503.13657,UC Berkeley 团队(Ion Stoica、Matei Zaharia、Joseph Gonzalez 等)。',
+ nx:'被 L²-VMAS、Thought Communication、Interlat 引用,作为「文本通信有损、造成协作失败」的依据。'});
+add({id:'c_scaling',s:'智能体规模化的科学',t:'Towards a Science of Scaling Agent Systems',au:'Kim, Gu, Park, ..., Yan et al.',yr:2025,ven:'arXiv 2025-12',url:ax('2512.08296'),tier:4,ord:29,ver:'B',kw:'scaling agent systems',
+ why:'想系统理解「加智能体何时有用」时选读。',
+ p:'(据标题)智能体系统规模化缺少科学化的规律总结。',m:'未打开正文。',r:'未核实。',
+ src:'arXiv 2512.08296(来自 L²-VMAS 参考文献)。',nx:'L²-VMAS 用它与 Qian 等人的工作一起代表「文本多智能体里的正向规模化」。'});
+add({id:'c_cowpox',s:'Cowpox 安全免疫',t:'Cowpox: Towards the Immunity of VLM-based Multi-Agent Systems',au:'Wu, Zhang, Li, Zhang, Guo, Qiu, Lukas, Zhang',yr:2025,ven:'ICML 2025',url:sr('Cowpox: Towards the immunity of VLM-based multi-agent systems'),tier:4,ord:30,ver:'B',kw:'safety vlm multi-agent',
+ why:'关心安全与攻击传播时再读。',
+ p:'(据标题)基于 VLM 的多智能体系统如何抵御风险。',m:'未打开正文。',r:'未核实。',
+ src:'ICML 2025(来自 L²-VMAS 参考文献,L²-VMAS 把它放在「理论保证」一类)。',nx:'—'});
+
+add({id:'d_topdown',s:'自顶向下 VQA',t:'Towards Top-Down Reasoning: An Explainable Multi-Agent Approach for Visual Question Answering',au:'Wang, Wan, Lao, ..., Lin',yr:2023,ven:'arXiv 2023-11',url:ax('2311.17331'),tier:4,ord:36,ver:'B',kw:'vqa multi-agent explainable',
+ why:'视觉多智能体的早期例子,选读。',
+ p:'(据标题)VQA 的可解释推理。',m:'未打开正文。',r:'未核实。',
+ src:'arXiv 2311.17331(来自 L²-VMAS 参考文献,归入任务型多智能体框架)。',nx:'—'});
+add({id:'d_mavqa',s:'Multi-Agent VQA',t:'Multi-Agent VQA: Exploring Multi-Agent Foundation Models in Zero-Shot Visual Question Answering',au:'Jiang, Zhuang, Shivakumar, Roth, Taylor',yr:2024,ven:'arXiv 2024-03(预备性结果)',url:ax('2403.14783'),tier:3,ord:17,ver:'A',kw:'vqa zero-shot tool agents counting',
+ why:'最早一批「专用智能体当工具」的视觉多智能体,篇幅小,看思路和失败案例即可。',
+ p:'基础模型在目标检测与计数上有短板,零样本 VQA 里表现受限。',
+ m:'自适应多智能体系统,让专门的智能体作为工具补足检测和计数,不针对具体 VQA 数据集微调。',
+ r:'只给出预备性的零样本结果并展示失败案例,无强结论。',
+ src:'arXiv 2403.14783,Dan Roth、Camillo J. Taylor 等。',
+ nx:'L²-VMAS 把它放在「任务自适应框架」一类。后续研究的重点转向「智能体之间如何传递视觉信息」。'});
+add({id:'d_bemyeyes',s:'Be My Eyes',t:'Be My Eyes: Extending Large Language Models to New Modalities Through Multi-Agent Collaboration',au:'Huang, Zhang, Liu, Qin, Zhu, Naumann, Chen, Poon',yr:2025,ven:'arXiv 2025-11',url:ax('2511.19417'),tier:2,ord:7,ver:'A',kw:'perceiver reasoner vlm llm collaboration',
+ why:'「小 VLM 当眼睛,大 LLM 当大脑」的典型分工,工程上很实用,也是对话式视觉多智能体的代表。',
+ p:'让 LLM 获得多模态能力通常要训练大规模 VLM,成本高;小 VLM 便宜灵活,但知识与推理弱。',
+ m:'BeMyEyes:用对话把高效的小 VLM(感知者)和强 LLM(推理者)组合起来。再用数据合成加监督微调训练感知者,让它学会与推理者协作。',
+ r:'纯文本的 DeepSeek-R1 配 Qwen2.5-VL-7B 感知者,在多项知识密集型多模态任务上超过 GPT-4o 等大型闭源 VLM。',
+ src:'arXiv 2511.19417,Hoifung Poon、Muhao Chen 等。',
+ nx:'通信仍然是自然语言,存在 L²-VMAS 指出的信息瓶颈。可以思考:感知者的隐状态能否直接传给推理者。'});
+
+add({id:'d_mdoc',s:'MDocAgent',t:'MDocAgent: A Multi-Modal Multi-Agent Framework for Document Understanding',au:'Han, Xia, Zhang, Sun, Li, Zhu, Yao',yr:2025,ven:'arXiv 2025-03',url:ax('2503.13964'),tier:3,ord:12,ver:'A',kw:'document qa rag multi-agent',
+ why:'文档问答方向的代表,看「五个智能体如何分工」。',
+ p:'文档问答的 RAG 方法常偏重单一模态,难以融合文字与视觉线索。',
+ m:'RAG 加多智能体:通用、批判、文本、图像、汇总五个智能体,各自检索多模态上下文再合并结论。',
+ r:'在 MMLongBench、LongDocURL 等五个基准上,平均比当时最强方法提升 12.1%。代码已开源(aiming-lab/MDocAgent)。',
+ src:'arXiv 2503.13964,Huaxiu Yao 组(UNC 方向)。',
+ nx:'同一团队随后做了医疗方向的 MMedAgent-RL。L²-VMAS 把它归为结构化视觉理解(文档、图表)一类。'});
+add({id:'d_pixelcraft',s:'PixelCraft',t:'PixelCraft: A Multi-Agent System for High-Fidelity Visual Reasoning on Structured Images',au:'Zhang, Li, Zhang, Fu, Song, Bian, Zhang, Yang, Wang',yr:2025,ven:'arXiv 2025-09',url:ax('2509.25185'),tier:4,ord:37,ver:'B',kw:'chart structured image multi-agent',
+ why:'图表、结构化图像方向才需要。',
+ p:'(据标题)结构化图像上的高保真视觉推理。',m:'未打开正文。',r:'未核实。',
+ src:'arXiv 2509.25185(来自 L²-VMAS 参考文献)。',nx:'—'});
+add({id:'d_metal',s:'METAL 图表生成',t:'METAL: A Multi-Agent Framework for Chart Generation with Test-Time Scaling',au:'Li, Wang, Gu, Chang, Peng',yr:2025,ven:'ACL 2025',url:sr('METAL: A multi-agent framework for chart generation with test-time scaling'),tier:4,ord:38,ver:'B',kw:'chart generation test-time scaling',
+ why:'图表生成方向才需要。',
+ p:'(据标题)图表生成的多智能体框架,带测试时扩展。',m:'未打开正文。',r:'未核实。',
+ src:'ACL 2025 长文(来自 L²-VMAS 参考文献)。',nx:'—'});
+
+add({id:'d_vif',s:'ViF 视觉流',t:'Visual Multi-Agent System: Mitigating Hallucination Snowballing via Visual Flow',au:'Yu, Xu, Zhang, He, Chen, Xue, Zhang, Liao, Hu, Jiang, Yan',yr:2026,ven:'arXiv 2025-09,v3 2026-01',url:ax('2509.21789'),tier:1,ord:4,ver:'A',kw:'hallucination snowballing visual flow attention vmas',
+ why:'第一个把「视觉多智能体特有的失败」讲清楚的工作:幻觉被后续智能体放大。方法轻量、插件式,先读它再读 L²-VMAS 最顺。',
+ p:'VLM 多智能体里出现新的失败形式「视觉幻觉滚雪球」:一个智能体产生的幻觉被后面的智能体放大,因为视觉信息只靠文本在智能体之间传递。',
+ m:'先做轮次、层、token 三个维度的注意力分析,发现对视觉的注意力会随智能体轮次下降;并找出中间层里注意力呈单峰、最能保存视觉证据的一小部分视觉 token。ViF 用这些视觉中继 token 来传递智能体间消息,并做注意力重分配来强化这个模式。轻量、即插即用。',
+ r:'在 4 种常见多智能体结构、10 个基础模型、8 个基准上稳定减轻幻觉滚雪球并提升表现(摘要未给具体数字,以论文表格为准)。代码:github.com/YU-deep/ViF。',
+ src:'arXiv 2509.21789(v3,2026-01-28),Shuicheng Yan、Xiaobin Hu 团队(NUS 等)。',
+ nx:'同组随后做了 L²-VMAS(双隐空间记忆)。Collaborative Memory 也把 ViF 归为「视觉或隐空间的智能体间交换」。'});
+add({id:'d_l2',s:'L²-VMAS 双隐空间记忆',t:'Dual Latent Memory for Visual Multi-agent System',au:'Yu, Xu, Chen, Yin, Yang, He, Hu, Zhang, Tan, Hu, Yan',yr:2026,ven:'ICML 2026 (PMLR 306)',url:ax('2602.00471'),tier:1,ord:5,ver:'A',kw:'scaling wall latent memory vmas entropy',
+ why:'最核心的一篇:既有「为什么视觉多智能体越协作越差」的实证分析,又给出隐空间记忆方案,涉及 token 成本。想做这个方向,这篇必须能复述并复现。',
+ p:'视觉多智能体出现「scaling wall」:增加智能体轮次反而降低精度并让 token 暴涨。在 MMBench + Qwen3-VL-8B-Thinking 上,精度在第 3 轮到峰值(84.8 到 86.6),第 6 轮起低于单智能体,第 10 轮的 token 是单智能体的约 30 倍(557 到 16,840)。原因是文本通信的信息瓶颈,以及感知和思考被混在一起传递。',
+ m:'模型无关框架,各智能体骨干冻结,只训练外挂的记忆模块。(1)记忆合成:共享的双隐空间记忆,把感知和思考分开存;感知记忆用三档粒度(局部、区域、全局)的视觉特征,思考记忆按高熵分隔符切块并限制容量(N=50),溢出时按触发率与相似度剪枝合并。(2)记忆编排:基于熵的主动触发,用可学习门(Gumbel-Sigmoid)决定取感知还是思考记忆,取 top-k 后压缩成长度 L=8 的隐记忆再注入。三阶段 PPO 训练,在 GQA 上训练,8 张 H200。',
+ r:'5 个骨干、4 种规模、6 种拓扑上,比文本式 VMAS 平均精度高 2.7–5.4%,token 少 21.3–44.8%;多图和视频基准平均提升约 4%;到第 10 轮仍比第 1 轮高 13.6%(Instruct)和 15.1%(Thinking)。消融里去掉「归因」或「思考记忆」掉点最多。个别单元格略有下降(如 LLaVA-OV-1.5-8B 的 MMBench)。',
+ src:'arXiv 2602.00471,ICML 2026;NUS、复旦、清华、浙大、上海 AI Lab 等联合,通讯 Xiaobin Hu,末位 Shuicheng Yan。',
+ nx:'Collaborative Memory for Multi-Agent VLM Systems 把它称为「dual latent memory」并从共享视觉记忆角度延伸。读时可追问:需要访问隐状态(白盒);需要额外 PPO 训练;GQA 上训练的记忆能否泛化到更复杂场景。'});
+add({id:'d_collab',s:'协作记忆(草稿)',t:'Collaborative Memory for Multi-Agent VLM Systems',au:'Zhang, Xia, Wang, Liu, Xiong, Wang',yr:2026,ven:'arXiv 2026-09(4 页初稿)',url:ax('2609.17921'),tier:3,ord:10,ver:'A',kw:'shared visual memory consistency vlm agents',
+ why:'最新的思路性文章,篇幅短,帮助想清楚「共享视觉记忆要解决哪些问题」。可当作选题灵感来读。',
+ p:'多个 VLM 智能体分别看图像不同区域、视频不同帧时,协作不只是分摊推理,还要分摊感知,共享视觉上下文成为核心问题。',
+ m:'提出框架,围绕三件事设计:记忆层级、跨智能体共享、一致性机制,让记忆保存观察、解释和后续推理之间的依赖,而不只是图像或文字摘要。',
+ r:'摘要和初稿没有给出定量结果(作者标注为 first draft,4 页 3 图)。',
+ src:'arXiv 2609.17921,2026-09-15 提交。',
+ nx:'正文把 ViF、dual latent memory、compact latent collaboration 并列为同一路线。是否有后续版本需要自己再查。'});
+add({id:'d_macf',s:'MACF 长视频隐协作',t:'Scaling Video Understanding via Compact Latent Multi-Agent Collaboration',au:'见 arXiv 页面',yr:2026,ven:'arXiv 2026-05 (cs.CV)',url:ax('2605.00444'),tier:3,ord:11,ver:'B',kw:'long video latent multi-agent coordinator',
+ why:'把隐空间协作用到长视频,是视觉多智能体的另一条应用线。',
+ p:'MLLM 受限于感知上下文预算,处理长视频困难。',
+ m:'各智能体把局部观察编码成紧凑、任务充分的 token,放在共享嵌入空间,由中心协调者聚合。三阶段课程训练:语义对齐、紧凑证据摘要、跨智能体协作。',
+ r:'据二手摘要:在多个视频理解基准上,同等预算下优于最先进的 MLLM 和多智能体系统。具体数字请查原文。',
+ src:'arXiv 2605.00444(2026-05-01)。本次只读到第三方摘要。',nx:'与 L²-VMAS 同属「用隐空间代替文本」的路线,但目标是长视频的预算限制。'});
+
+add({id:'e_thought',s:'Thought Communication',t:'Thought Communication in Multiagent Collaboration',au:'Zheng, Zhao, Li, Xie, Gao, Zhang, Zhang',yr:2025,ven:'NeurIPS 2025',url:ax('2510.20733'),tier:3,ord:8,ver:'A',kw:'latent thoughts identifiability multi-agent',
+ why:'隐空间通信的理论基础。重点看问题设定与可识别性结论,证明可略。',
+ p:'自然语言有损、含糊,限制了多智能体的集体智能。',
+ m:'提出「思想通信」:把智能体状态看作未知函数作用在潜在思想上的结果,建立潜变量模型,证明在非参数设定下任意两个智能体之间共享与私有的潜在思想可识别,整体的思想共享结构也能恢复。据此提出框架,在通信前提取所有智能体的潜在思想并分配给相关智能体。',
+ r:'在合成和真实基准上验证了理论,并显示超越语言的通信对协作有益(摘要未给具体数字)。',
+ src:'NeurIPS 2025 主会,CMU、Meta AI、MBZUAI,通讯 Lizhu Zhang、Kun Zhang。',
+ nx:'L²-VMAS 把它列为「不能直接用于视觉多智能体」的隐空间通信工作之一:没有考虑高维视觉输入和感知与认知混合的风险。'});
+add({id:'e_c2c',s:'Cache-to-Cache',t:'Cache-to-Cache: Direct Semantic Communication Between Large Language Models',au:'Fu, Min, Zhang, Yan, Dai, Ouyang, Wang',yr:2026,ven:'ICLR 2026',url:ax('2510.03215'),tier:3,ord:9,ver:'A',kw:'kv cache communication multi-llm',
+ why:'隐空间通信里最「工程直接」的一种:直接传 KV 缓存。读方法图与实验表。',
+ p:'多 LLM 通过文本通信,会丢失丰富语义,还要逐 token 生成而延迟高。',
+ m:'C2C:用神经网络把源模型的 KV 缓存投影并融合进目标模型的缓存,再用可学习门选出受益的层,绕开中间文本。',
+ r:'平均精度比单个模型高 8.5–10.5%,比文本通信高约 3.0–5.0%,延迟平均降到约一半。代码:github.com/thu-nics/C2C。',
+ src:'arXiv 2510.03215,ICLR 2026;清华大学团队(代码仓库 thu-nics)。',
+ nx:'只针对 LLM,没有做视觉。L²-VMAS 也把它列为不能直接迁移到视觉多智能体的方法。'});
+add({id:'e_latentmas',s:'LatentMAS',t:'Latent Collaboration in Multi-Agent Systems',au:'Zou, Qiu, Li, Yang, Tieu, Lu, Shen, Tong, Choi, He, Zou, Wang, Yang',yr:2026,ven:'ICML 2026 Spotlight',url:ax('2511.20639'),tier:1,ord:6,ver:'A',kw:'latent collaboration working memory training-free',
+ why:'纯隐空间协作的代表作,训练免费、开源。看懂它,才能判断 L²-VMAS 为什么要为视觉另做一套。',
+ p:'现有 LLM 多智能体依靠文本中介来推理和通信,信息有损且重复编码解码。',
+ m:'LatentMAS(无需训练):每个智能体用最后一层隐藏嵌入自回归地生成「潜在思考」而不是文字;共享的潜在工作记忆保存并传递各智能体的内部表示,无需重新编码。并给出表达力与无损信息保持的理论分析。',
+ r:'9 个基准(数学与科学推理、常识、代码)上优于单智能体与文本式 MAS:精度最高提升 14.6%,输出 token 减少 70.8–83.7%,端到端推理快 4–4.3 倍。代码与数据开源:github.com/Gen-Verse/LatentMAS。',
+ src:'arXiv 2511.20639(v4 2026-08),ICML 2026 Spotlight;Mengdi Wang、Ling Yang 等(Princeton 方向)。',
+ nx:'只做文本 LLM。L²-VMAS 指出它不能直接用于视觉。后续还有 LatCom(跨智能体压缩)和 CondenseFlow(语义压缩)解决隐通信的规模问题。'});
+add({id:'e_interlat',s:'Interlat',t:'Enabling Agents to Communicate Entirely in Latent Space (Interlat)',au:'见 arXiv 页面',yr:2025,ven:'arXiv 2025-11',url:ax('2511.09149'),tier:4,ord:31,ver:'A',kw:'latent communication hidden states',
+ why:'隐空间通信的另一种实现,选读。',
+ p:'语言通信含糊且有损,是协作失败的主要来源之一(引用 MAST 等)。',
+ m:'Interlat:直接传输模型最后一层隐藏状态作为「思想」;另外训练独立的推理过程,自回归地在隐空间里生成长度可控的紧凑隐消息。',
+ r:'本次只读到引言,结果请查原文。',
+ src:'arXiv 2511.09149。',nx:'—'});
+add({id:'e_latcom',s:'LatCom',t:'LatCom: Cross-Agent Latent Compression for Efficient Multi-Agent Collaboration',au:'Zhang, Zhang, Zhu, Zhang, Jin et al.',yr:2026,ven:'arXiv 2026-09',url:ax('2609.37017'),tier:4,ord:32,ver:'A',kw:'latent compression multi-agent efficiency',
+ why:'了解隐协作的下一个瓶颈:发送方隐状态太多,接收方上下文爆炸。',
+ p:'隐空间协作中,接收方上下文随智能体数量和推理长度增长,计算、内存和延迟变大。',
+ m:'把多个发送方的隐状态压成固定数量的、接收方可读的任务相关槽位;两阶段训练:单发送方可读性学习,再做多发送方融合。',
+ r:'据摘要:多个 LLM 与基准上任务表现强,推理延迟和 token 使用显著下降。',
+ src:'arXiv 2609.37017(2026-09-29)。',nx:'只做 LLM,尚未见视觉版本(本次检索范围内)。'});
+add({id:'e_condense',s:'CondenseFlow',t:'CondenseFlow: Scalable Latent Space Collaboration via Semantic Compression for Multi-Agent Systems',au:'Chen, Wu, Zhao, Fan',yr:2026,ven:'ACL 2026 Findings',url:'https://aclanthology.org/2026.findings-acl.669/',tier:4,ord:33,ver:'A',kw:'kv cache compression latent',
+ why:'了解隐通信的内存开销问题,选读。',
+ p:'全状态隐通信语义丰富,但内存开销随协作轮数线性增长。',
+ m:'Latent Thought Condenser:用可学习语义探针把 KV 缓存压成固定大小,通信复杂度为 O(1),并证明压缩误差受注意力集中度约束。',
+ r:'7 个基准、6 个模型:KV 缓存内存减少超过 99%,延迟约降 20%,精度几乎不降,平均比文本方法高 1.7 个百分点。代码:github.com/xxy33/condenseflow。',
+ src:'Findings of ACL 2026,论文 ID 2026.findings-acl.669。',nx:'—'});
+
+add({id:'f_coela',s:'CoELA',t:'Building Cooperative Embodied Agents Modularly with Large Language Models',au:'Zhang et al.',yr:2024,ven:'ICLR 2024',url:ax('2307.02485'),tier:4,ord:34,ver:'B',kw:'embodied cooperation llm modular',
+ why:'具身多智能体合作的早期工作。看它如何模块化,以及它的观察是文本这一点。',
+ p:'(据标题)用 LLM 构建能合作的具身智能体。',m:'未打开正文。',r:'未核实。',
+ src:'ICLR 2024(来自 MECoBench 参考文献)。MECoBench 的对照表指出 CoELA 的环境观察不是多模态的。',nx:'MECoBench 用「视觉观察」补上了这类文本基准的缺口。'});
+add({id:'f_roco',s:'RoCo',t:'RoCo: Dialectic Multi-Robot Collaboration with Large Language Models',au:'Mandi, Jain, Song',yr:2024,ven:'ICRA 2024',url:ax('2307.04738'),tier:4,ord:35,ver:'B',kw:'multi-robot llm dialogue',
+ why:'多机器人对话式协作,选读。',
+ p:'(据标题)多机器人通过对话协作。',m:'未打开正文。',r:'未核实。',
+ src:'ICRA 2024(来自 MECoBench 参考文献),其基准为 RoCoBench。',nx:'MECoBench 对照表中它同样是文本观察。'});
+add({id:'f_team',s:'TeamCraft',t:'TeamCraft: A Benchmark for Multi-Modal Multi-Agent Systems in Minecraft',au:'Long, Li, Gong, Wu, Terzopoulos, Gao',yr:2024,ven:'arXiv 2024-12',url:ax('2412.05255'),tier:3,ord:15,ver:'A',kw:'minecraft benchmark multimodal multi-agent',
+ why:'多模态多智能体基准的早期代表,看任务设定和泛化协议。',
+ p:'具身智能体需要在视觉丰富、不断变化的环境里,理解多模态观察与任务描述并协作。',
+ m:'基于 Minecraft 的基准:55,000 个由多模态提示指定的任务变体,程序生成的专家示范用于模仿学习,以及评估泛化能力的协议。',
+ r:'现有模型在新目标、新场景和没见过的智能体数量上泛化困难。代码数据:github.com/teamcraft-bench/teamcraft。',
+ src:'arXiv 2412.05255,Xiaofeng Gao 等。',
+ nx:'MECoBench 称它迈出了第一步,但没有系统研究通信机制、协作模式和团队规模如何影响协作。'});
+add({id:'f_viki',s:'VIKI-R',t:'VIKI-R: Coordinating Embodied Multi-Agent Cooperation via Reinforcement Learning',au:'Kang, Song, Zhou, Qin, Yang, Liu, Torr, Bai, Yin',yr:2025,ven:'NeurIPS 2025',url:ax('2506.09049'),tier:3,ord:14,ver:'A',kw:'embodied vlm rl benchmark heterogeneous',
+ why:'用 VLM 加强化学习做异构具身协作,方法和基准都有参考价值。',
+ p:'现有 VLM 方法对多种机器人形态的支持有限。',
+ m:'VIKI-Bench:首个分层基准,含三级任务(智能体激活、任务规划、轨迹感知),有多种机器人形态与多视角观察。VIKI-R:两阶段,先用 CoT 标注示范微调预训练 VLM,再用多层级奖励做强化学习。',
+ r:'在各级任务上显著优于基线;强化学习使异构智能体间出现组合式的协作模式。',
+ src:'arXiv 2506.09049(v3 2026-01),NeurIPS 2025(出处来自 MECoBench 参考文献),Zhenfei Yin、Lei Bai 等。',
+ nx:'L²-VMAS 把它归为 VMAS 在具身智能上的延伸;MECoBench 也引用它。'});
+add({id:'f_meco',s:'MECoBench',t:'MECoBench: A Systematic Study of Multimodal Agent Collaboration in Embodied Environments',au:'Liu, Zhang, Hu, Wang, Wei',yr:2026,ven:'arXiv 2026-06',url:ax('2606.31966'),tier:2,ord:13,ver:'A',kw:'embodied benchmark team size communication shared memory',
+ why:'数据量大、结论清楚的实证研究,可以直接当作「多智能体视觉协作什么时候有用」的证据库。',
+ p:'MLLM 在视觉具身环境里的协作能力研究不足;现有基准多把观察转成文本,掩盖了视觉感知与协作耦合带来的失败模式。',
+ m:'基于 VirtualHome:8 类任务模板、96 个任务各配并行与顺序两种设置,共 192 个测试用例;三种协作模式(隔离、去中心、中心)与四种协议;指标覆盖成功率、效率(含每步 token)和协作质量(分工度、冲突率、交接失败率)。评测 15 个模型配置(GPT-5.4、Gemini-3.1-Pro、Qwen3-VL、Qwen3.5、Gemma4、InternVL3.5、Llama4、GLM-4.6V 等)。',
+ r:'协作总体提升完成率,但随团队变大呈倒 U 形;通信是增益的关键,去掉通信顺序任务掉得最多;共享记忆大幅降 token 且在并行任务上更有效;视觉增强的领导者仅在领导者模型视觉能力强时有帮助;「幻觉式完成」虽只占 1–1.5%,却使并行任务成功率下降 73.7%。代码:github.com/q-i-n-g/MECoBench。',
+ src:'arXiv 2606.31966(2026-06-30),复旦大学、上海创智学院、香港中文大学,通讯 Siyuan Wang、Zhongyu Wei。',
+ nx:'局限:只有 VirtualHome 室内场景、96 个任务、最多 5 个智能体。可以与 L²-VMAS 对照:两者都发现「加智能体不一定更好」。'});
+
+add({id:'g_mmed',s:'MMedAgent-RL',t:'MMedAgent-RL: Optimizing Multi-Agent Collaboration for Multimodal Medical Reasoning',au:'Xia, Wang, Peng, Zeng, Dong, Wu, Tang, Zhu, Li, Zhang, Liu, Lu, Yao',yr:2026,ven:'ICLR 2026 Poster',url:'https://openreview.net/forum?id=2awntLXwR6',tier:3,ord:16,ver:'A',kw:'medical rl multi-agent qwen2.5-vl triage',
+ why:'强化学习训练多智能体 VLM 的代表,医疗只是场景。看训练方式,即课程学习加动态熵调节。',
+ p:'单智能体 Med-LVLM 难以覆盖不同专科;已有按固定顺序协作的多智能体流程缺少灵活性和适应性。',
+ m:'用 RL 训练两个基于 Qwen2.5-VL 的全科智能体:分诊医生学会分配专科,主治医生整合多位专科医生与自身知识给出结论。针对专科输出不一致,提出课程学习引导的 RL 加动态熵调节,教会主治医生在模仿专科与纠正其错误之间取得平衡。',
+ r:'在 5 个医学 VQA 基准上优于开源与闭源 Med-LVLM,相对强基线平均提升 23.6%。',
+ src:'ICLR 2026(2026-04-23 海报),Huaxiu Yao 组,Peng Xia 为第一作者。',
+ nx:'可与 MDocAgent 对照(同一团队:先做固定流程,再用 RL 做动态协作)。'});
+add({id:'g_ucagents',s:'UCAgents',t:'UCAgents: Unidirectional Convergence for Visual Evidence Anchored Multi-Agent Medical Decision-Making',au:'Feng, Huang, Zhu, Zhang, Dou',yr:2025,ven:'arXiv 2025-12',url:ax('2512.02485'),tier:4,ord:39,ver:'B',kw:'medical multi-agent visual evidence',
+ why:'医疗方向才需要。',
+ p:'(据标题)以视觉证据为锚点的多智能体医疗决策。',m:'未打开正文。',r:'未核实。',
+ src:'arXiv 2512.02485(来自 L²-VMAS 参考文献)。',nx:'—'});
+
+const TREE={name:'多智能体 VLM',desc:'整个调研领域的根节点。先从 A 全景看起,然后沿 C、D、E 三条主线深入。',children:[
+ {name:'A 全景综述',desc:'先泛读,建立术语和地图。',children:['s_llmma','s_lma','s_embodied','s_vlm']},
+ {name:'B 基础',desc:'只补缺,不用精读。',children:[
+   {name:'B1 视觉语言模型',desc:'单体 VLM 的基础。',children:['b_clip','b_llava','b_qwen3vl']},
+   {name:'B2 LLM 多智能体',desc:'文本多智能体的经典框架与范式。',children:['b_camel','b_autogen','b_metagpt','b_agentverse','b_mad','b_macnet']}]},
+ {name:'C 失败诊断',desc:'为什么多智能体常常没有预期的收益。',children:['c_mast','c_scaling','c_cowpox']},
+ {name:'D 视觉多智能体系统',desc:'本调研的核心。',children:[
+   {name:'D1 任务型框架',desc:'智能体分工,文字沟通。',children:['d_topdown','d_mavqa','d_bemyeyes']},
+   {name:'D2 文档与图表',desc:'结构化视觉场景。',children:['d_mdoc','d_pixelcraft','d_metal']},
+   {name:'D3 视觉失败与记忆',desc:'从幻觉滚雪球到隐空间记忆,主线。',children:['d_vif','d_l2','d_collab']},
+   {name:'D4 长视频',desc:'隐协作用于长视频。',children:['d_macf']}]},
+ {name:'E 通信:文本到隐空间',desc:'智能体之间传什么。',children:['e_thought','e_c2c','e_latentmas','e_interlat','e_latcom','e_condense']},
+ {name:'F 具身与多机器人',desc:'视觉观察下的物理协作。',children:['f_coela','f_roco','f_team','f_viki','f_meco']},
+ {name:'G 垂直领域',desc:'医疗等专业场景。',children:['g_mmed','g_ucagents']}
+]};
+/* 边:[被引用论文, 引用它的论文],均来自已读到的参考文献列表 */
+const E=[['d_vif','d_l2'],['e_latentmas','d_l2'],['e_thought','d_l2'],['e_c2c','d_l2'],['c_mast','d_l2'],['b_mad','d_l2'],['b_macnet','d_l2'],['d_bemyeyes','d_l2'],['d_mdoc','d_l2'],['f_viki','d_l2'],['d_mavqa','d_l2'],['d_topdown','d_l2'],['d_pixelcraft','d_l2'],['d_metal','d_l2'],['g_ucagents','d_l2'],['b_qwen3vl','d_l2'],['c_scaling','d_l2'],['c_cowpox','d_l2'],
+ ['d_vif','d_collab'],['d_l2','d_collab'],
+ ['f_viki','f_meco'],['f_team','f_meco'],['f_coela','f_meco'],['f_roco','f_meco'],['b_metagpt','f_meco'],['b_agentverse','f_meco'],['b_macnet','f_meco'],['s_embodied','f_meco'],['b_qwen3vl','f_meco'],
+ ['c_mast','e_thought'],['c_mast','e_interlat']];
+
+const STAGES=[[1,2,'一 建立全景(泛读)'],[3,4,'二 看清问题'],[5,6,'三 精读主线'],[7,11,'四 对照与扩展'],[12,17,'五 按方向选读'],[18,99,'六 泛读备查']];
+
+/* ---------- state ---------- */
+const $=s=>document.querySelector(s);
+const KEY='mavlm-tree-read-v1';
+let read={};try{read=JSON.parse(localStorage.getItem(KEY)||'{}')||{}}catch(e){}
+const saveRead=()=>{try{localStorage.setItem(KEY,JSON.stringify(read))}catch(e){}};
+const state={sel:null,tiers:new Set([1,2,3,4]),q:'',unread:false,edges:false,scale:1,tab:'tree'};
+const ALL=Object.values(P).sort((a,b)=>a.ord-b.ord);
+const norm=n=>typeof n==='string'?{paper:true,id:n}:n;
+function prep(n){n=norm(n);if(n.children)n.children=n.children.map(prep);return n}
+const root=prep(TREE);
+/* 一级分支默认展开,B 下的二级默认折叠 */
+['B2 LLM 多智能体','B1 视觉语言模型'].forEach(()=>{});
+function walk(n,f){f(n);(n.children||[]).forEach(c=>walk(c,f))}
+walk(root,n=>{if(n.name&&n.name.startsWith('B')&&n.children&&n.children.some(c=>c.children))n.collapsed=false;if(n.name==='B1 视觉语言模型'||n.name==='B2 LLM 多智能体')n.collapsed=true});
+
+/* ---------- cards ---------- */
+const tierTag=t=>`<span class="tag t${t}">${TIERS[t].name}</span>`;
+function cardHTML(p,full){
+  const rel=relOf(p.id);
+  return `<div class="card">
+   <div>${tierTag(p.tier)}<span class="ord">阅读顺序 #${String(p.ord).padStart(2,'0')}</span>${read[p.id]?'<span class="ord">已读</span>':''}</div>
+   <h3>${p.t}</h3><div class="meta">${p.au} · ${p.yr} · ${p.ven}</div>
+   <dl>
+    <div><dt>建议程度</dt><dd>${TIERS[p.tier].name}(${TIERS[p.tier].time}):${TIERS[p.tier].desc}。${p.why}</dd></div>
+    <div><dt>解决什么问题</dt><dd>${p.p}</dd></div>
+    <div><dt>方法怎么做</dt><dd>${p.m}</dd></div>
+    <div><dt>结果怎么样</dt><dd>${p.r}</dd></div>
+    <div><dt>论文从哪里来</dt><dd>${p.src}</dd></div>
+    <div><dt>后续还有什么工作</dt><dd>${p.nx}${rel.by.length?'<br>被已核实的引用:'+rel.by.map(i=>P[i].s).join('、'):''}</dd></div>
+   </dl>
+   <div class="ver">核实状态:<b>${VER[p.ver]}</b></div>
+  </div>`;
+}
+function relOf(id){return{by:E.filter(e=>e[0]===id).map(e=>e[1]),cites:E.filter(e=>e[1]===id).map(e=>e[0])}}
+function showPanel(id){
+  const p=P[id];state.sel=id;const rel=relOf(id);
+  const chips=(arr)=>arr.map(i=>`<button data-go="${i}">${P[i].s}</button>`).join('');
+  $('#panel').innerHTML=cardHTML(p,true)+`
+   <div class="actions"><a class="btn" href="${p.url}" target="_blank" rel="noopener">打开论文</a>
+   <button class="btn ghost" id="bRead" aria-pressed="${!!read[id]}">${read[id]?'取消已读':'标记已读'}</button></div>
+   ${rel.cites.length?`<div><div class="meta">它引用了(已核实)</div><div class="rel">${chips(rel.cites)}</div></div>`:''}
+   ${rel.by.length?`<div><div class="meta">被这些论文引用(已核实)</div><div class="rel">${chips(rel.by)}</div></div>`:''}`;
+  $('#bRead').onclick=()=>{read[id]=!read[id];if(!read[id])delete read[id];saveRead();refresh();showPanel(id)};
+  $('#panel').querySelectorAll('[data-go]').forEach(b=>b.onclick=()=>select(b.dataset.go));
+  if(matchMedia('(max-width:980px)').matches)$('#panel').scrollIntoView({behavior:'smooth',block:'nearest'});
+}
+function select(id){showPanel(id);drawTree();renderRoute()}
+
+/* ---------- tooltip ---------- */
+const tt=$('#tt');
+const canHover=!matchMedia('(hover:none)').matches;
+function moveTT(ev){
+  const w=tt.offsetWidth,h=tt.offsetHeight,vw=innerWidth,vh=innerHeight;
+  let x=ev.clientX+18,y=ev.clientY-20;
+  if(x+w>vw-8)x=ev.clientX-w-18;if(x<8)x=8;
+  if(y+h>vh-8)y=vh-h-8;if(y<8)y=8;
+  tt.style.left=x+'px';tt.style.top=y+'px';
+}
+function showTT(html,ev){if(!canHover)return;tt.innerHTML=html;tt.hidden=false;moveTT(ev)}
+const hideTT=()=>{tt.hidden=true};
+
+/* ---------- filters ---------- */
+function matchQ(p){
+  if(!state.q)return true;const q=state.q.toLowerCase();
+  return (p.t+p.s+p.au+p.kw+p.ven).toLowerCase().includes(q);
+}
+function active(p){
+  return state.tiers.has(p.tier)&&matchQ(p)&&!(state.unread&&read[p.id]);
+}
+const filtering=()=>state.q||state.unread||state.tiers.size<4;
+
+/* ---------- tree ---------- */
+const ROWH=30,COLW=250,M={l:150,r:280,t:24,b:24};
+function drawTree(){
+  const svg=d3.select('#svg');svg.selectAll('*').remove();
+  const h=d3.hierarchy(root,d=>d.collapsed?null:d.children);
+  d3.tree().nodeSize([ROWH,COLW])(h);
+  let x0=Infinity,x1=-Infinity,dmax=0;
+  h.each(d=>{x0=Math.min(x0,d.x);x1=Math.max(x1,d.x);dmax=Math.max(dmax,d.depth)});
+  const W=M.l+dmax*COLW+M.r,H=x1-x0+M.t+M.b;
+  svg.attr('viewBox',`0 0 ${W} ${H}`).attr('width',W*state.scale).attr('height',H*state.scale);
+  const g=svg.append('g').attr('transform',`translate(${M.l},${M.t-x0})`);
+  g.append('g').selectAll('path').data(h.links()).join('path').attr('class','link')
+    .attr('d',d3.linkHorizontal().x(d=>d.y).y(d=>d.x));
+  const pos={};h.each(d=>{if(d.data.paper)pos[d.data.id]=d});
+  const edgeG=g.append('g');
+  const drawEdges=()=>{
+    edgeG.selectAll('*').remove();
+    const list=E.filter(e=>pos[e[0]]&&pos[e[1]]&&(state.edges||e[0]===state.sel||e[1]===state.sel));
+    edgeG.selectAll('path').data(list).join('path').attr('class','xedge').attr('d',e=>{
+      const a=pos[e[0]],b=pos[e[1]];const off=70;
+      return `M${a.y},${a.x}C${a.y+off},${a.x} ${b.y+off},${b.x} ${b.y},${b.x}`;});
+  };
+  drawEdges();
+  const node=g.append('g').selectAll('g').data(h.descendants()).join('g')
+    .attr('class',d=>{
+      let c='node'+(d.data.paper?'':' grp');
+      if(d.data.paper){const p=P[d.data.id];if(filtering()&&!active(p))c+=' dim';if(read[p.id])c+=' read';if(state.sel===p.id)c+=' sel'}
+      return c}).attr('transform',d=>`translate(${d.y},${d.x})`)
+    .attr('tabindex',0).attr('role','button')
+    .attr('aria-label',d=>d.data.paper?P[d.data.id].t:d.data.name);
+  node.each(function(d){
+    const s=d3.select(this);
+    if(d.data.paper){
+      const p=P[d.data.id];const r={1:9,2:7.5,3:6,4:4.6}[p.tier];
+      s.append('circle').attr('class','main').attr('r',r)
+        .attr('fill',p.tier===4?'var(--surface)':`var(--t${p.tier})`)
+        .attr('stroke',p.tier===4?'var(--t4)':`var(--t${p.tier})`).attr('stroke-width',p.tier===4?1.8:1);
+      const t=s.append('text').attr('x',r+7).attr('dy','0.33em');
+      t.append('tspan').attr('class','ordt').text(String(p.ord).padStart(2,'0')+'  ');
+      t.append('tspan').attr('class','ttl').text(p.s+(read[p.id]?'  ✓':''));
+      s.on('mouseenter',ev=>showTT(cardHTML(p,false),ev)).on('mousemove',moveTT).on('mouseleave',hideTT)
+       .on('click',()=>{hideTT();select(p.id)}).on('keydown',ev=>{if(ev.key==='Enter'||ev.key===' '){ev.preventDefault();select(p.id)}});
+    }else{
+      const hidden=d.data.collapsed?countLeaves(d.data):0;
+      s.append('rect').attr('x',-6).attr('y',-6).attr('width',12).attr('height',12).attr('rx',3)
+        .attr('fill',d.depth===0?'var(--accent)':'var(--surface2)').attr('stroke','var(--accent)').attr('stroke-width',1.5);
+      s.append('text').attr('x',-12).attr('text-anchor','end').attr('dy','0.33em')
+        .text(d.data.name+(hidden?`  (+${hidden})`:''));
+      const toggle=()=>{if(d.data.children){d.data.collapsed=!d.data.collapsed;drawTree()}};
+      s.on('mouseenter',ev=>showTT(`<h3>${d.data.name}</h3><div>${d.data.desc}</div>${d.data.children?'<div class="meta">点击展开或折叠</div>':''}`,ev)).on('mousemove',moveTT).on('mouseleave',hideTT)
+       .on('click',()=>{hideTT();toggle()}).on('keydown',ev=>{if(ev.key==='Enter'||ev.key===' '){ev.preventDefault();toggle()}});
+    }
+  });
+}
+function countLeaves(n){let c=0;walk(n,x=>{if(x.paper)c++});return c}
+function setAll(v,onlyDeep){walk(root,n=>{if(n.children&&n!==root){n.collapsed=onlyDeep?(n.children.some(c=>c.children)?false:v):v}})}
+
+/* ---------- route ---------- */
+function renderRoute(){
+  const box=$('#routeView');
+  box.innerHTML=STAGES.map(([a,b,name])=>{
+    const items=ALL.filter(p=>p.ord>=a&&p.ord<=b&&active(p));
+    if(!items.length)return '';
+    return `<div class="stage"><h2>${name}</h2>${items.map(p=>`
+      <button class="row${read[p.id]?' read':''}${state.sel===p.id?' sel':''}" data-id="${p.id}">
+        <span class="n">${String(p.ord).padStart(2,'0')}</span>
+        <span class="t">${p.t}</span>
+        <span class="r">${tierTag(p.tier)}</span>
+        <span class="w">${p.yr} · ${p.ven}。${p.why}</span>
+      </button>`).join('')}</div>`}).join('')||'<div class="empty">没有符合筛选条件的论文。</div>';
+  box.querySelectorAll('.row').forEach(b=>b.onclick=()=>select(b.dataset.id));
+}
+
+/* ---------- chrome ---------- */
+function refresh(){
+  const n=ALL.length,k=ALL.filter(p=>read[p.id]).length;
+  $('#progNum').textContent=`已读 ${k} / ${n}`;$('#progBar').style.width=(k/n*100)+'%';
+  drawTree();renderRoute();
+}
+function setTab(t){
+  state.tab=t;
+  $('#tabTree').setAttribute('aria-selected',t==='tree');$('#tabRoute').setAttribute('aria-selected',t==='route');
+  $('#treeView').hidden=t!=='tree';$('#routeView').hidden=t!=='route';$('#treeTools').hidden=t!=='tree';
+  hideTT();
+}
+$('#tabTree').onclick=()=>setTab('tree');$('#tabRoute').onclick=()=>setTab('route');
+$('#tierChips').innerHTML=[1,2,3,4].map(t=>`<button class="chip" data-t="${t}" aria-pressed="true"><span class="dot t${t}"></span>${TIERS[t].name}</button>`).join('');
+document.querySelectorAll('#tierChips .chip').forEach(b=>b.onclick=()=>{
+  const t=+b.dataset.t;if(state.tiers.has(t))state.tiers.delete(t);else state.tiers.add(t);
+  b.setAttribute('aria-pressed',state.tiers.has(t));refresh()});
+$('#legend').innerHTML=[1,2,3,4].map(t=>`<span><span class="dot t${t}"></span> ${TIERS[t].name}:${TIERS[t].desc}</span>`).join('');
+$('#q').addEventListener('input',e=>{state.q=e.target.value.trim();refresh()});
+$('#bUnread').onclick=e=>{state.unread=!state.unread;e.currentTarget.setAttribute('aria-pressed',state.unread);refresh()};
+$('#bEdges').onclick=e=>{state.edges=!state.edges;e.currentTarget.setAttribute('aria-pressed',state.edges);drawTree()};
+$('#bExpand').onclick=()=>{walk(root,n=>{if(n.children)n.collapsed=false});drawTree()};
+$('#bCollapse').onclick=()=>{walk(root,n=>{if(n.children&&n!==root)n.collapsed=(n.children.some(c=>c.children)?false:true)});drawTree()};
+$('#bZoomIn').onclick=()=>{state.scale=Math.min(1.5,state.scale+.15);drawTree()};
+$('#bZoomOut').onclick=()=>{state.scale=Math.max(.5,state.scale-.15);drawTree()};
+addEventListener('scroll',hideTT,true);
+if(innerWidth<700)state.scale=.8;
+refresh();
+</script>
+
+</body></html>
